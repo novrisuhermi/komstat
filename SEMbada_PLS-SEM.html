@@ -626,6 +626,37 @@ dialog::backdrop { background: rgba(0, 0, 0, .28); backdrop-filter: blur(3px); -
 .metric b { font-family: var(--font-display); font-size: clamp(19px, 1.7vw, 24px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; overflow-wrap: anywhere; }
 .metric span { margin-top: 2px; overflow-wrap: anywhere; }
 
+/* ---- dialogs that always fit the visible viewport (mobile Safari): fixed header, scrolling body */
+dialog[open] { display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
+dialog[open] > form { display: block; overflow: auto; }
+dialog .dlg-h { position: relative; flex: 0 0 auto; background: transparent; gap: 12px; }
+dialog .dlg-h h2 { margin: 0; }
+dialog .dlg-h [data-action^="close"] { background: var(--fill); font-weight: 600; min-height: 36px; padding: 6px 16px; }
+dialog .dlg-b { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+@media (max-width: 640px) {
+  dialog[open]:not(.choice-dlg) { width: 100%; max-width: 100%; height: 100%; height: 100dvh; max-height: 100%; max-height: 100dvh; margin: 0; inset: 0; border: 0; border-radius: 0; background: var(--glass-3); }
+  dialog:not(.choice-dlg) .dlg-h { padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px; border-bottom: 1px solid var(--hair); }
+  dialog:not(.choice-dlg) .dlg-h [data-action^="close"] { min-height: 40px; padding: 8px 18px; font-size: 16px; }
+  dialog:not(.choice-dlg) .dlg-b { padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px)); }
+  .choice-dlg { width: calc(100% - 24px); max-width: 520px; }
+}
+
+/* ---- phones: horizontal step strip, compact hero */
+@media (max-width: 640px) {
+  .rail { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 8px; gap: 4px; }
+  .rail::-webkit-scrollbar { display: none; }
+  .rail .step { flex: 0 0 auto; white-space: nowrap; padding: 8px 12px 8px 4px; }
+  .rail .step small, .rail .step .sub, .rail-foot { display: none; }
+  .hero2 { padding-top: 22px; }
+  .hero2-eyebrow { flex-wrap: wrap; justify-content: center; gap: 6px 8px; font-size: 14.5px; }
+  .hero2-eyebrow svg { width: 22px; height: 22px; }
+  .hero2 h1 { font-size: clamp(32px, 9vw, 46px); letter-spacing: -0.04em; margin: 14px auto 16px; }
+  .hero2 .lead { font-size: 16px; }
+  .hero2-cta .btn-big, .hero2-cta .btn-primary { padding: 12px 20px; font-size: 16px; }
+  .hero2-facts { gap: 6px 18px; font-size: 13.5px; }
+  .view { padding: 18px 14px 70px; }
+}
+
 .btn-link { background: none; border: 0; padding: 0; color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-decoration-color: var(--rule); text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer; text-align: left; }
 .btn-link:hover { text-decoration-color: var(--dropout); }
 pre.code { background: var(--sheet); border: 1px solid var(--line); padding: 12px 14px; border-radius: var(--r); overflow: auto; font-family: ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace; font-size: 12.5px; line-height: 1.55; margin: 0; max-width: 100%; }
@@ -3060,7 +3091,7 @@ async function downloadPNG() {
 }
 
 /* ================================================================ export: shared helpers */
-const APP_VERSION = '1.9.2';
+const APP_VERSION = '1.9.3';
 const APP_AUTHOR = { family: 'Suhermi', given: 'Novri', initials: 'N.' };
 function loadLib(id, name) {
   if (window[name]) return window[name];
@@ -5069,6 +5100,11 @@ function heroHTML() {
       </div></div></div>
   </section>`;
 }
+/* tapping outside a dialog (on its backdrop) closes it, which also helps on touch screens without an Esc key */
+document.addEventListener('click', e => {
+  const d = e.target; if (!d || d.tagName !== 'DIALOG' || !d.open) return;
+  const r = d.getBoundingClientRect(); if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
+});
 
 /* ================================================================ home, research info, model templates, recent projects, citation, advanced-analysis controls */
 const T_ = (key, en, id, den, did, pre, items) => ({ key, en, id, den, did, pre: pre || [], items: items || null });
@@ -5938,7 +5974,7 @@ function helpHTML() {
   <h3>${tl('Narasi paper dan presentasi', 'Paper narrative and presentations')}</h3><p>${tl('Bagian Narasi paper menyusun draf makalah format konferensi dua kolom: abstrak, tinjauan pustaka dan metodologi lengkap dengan rumus, hasil, kesimpulan, serta daftar pustaka bernomor. Unduh sebagai PDF (dikompilasi LaTeX langsung di aplikasi, tanpa internet), Word, atau sumber LaTeX. Presentasi tersedia sebagai PowerPoint dengan rumus hasil render LaTeX, serta Beamer dalam PDF atau sumber LaTeX. Pendahuluan, teori konstruk, dan pembahasan diberi isian dalam kurung siku untuk dilengkapi sendiri.', 'The Paper narrative section drafts a two-column conference paper: abstract, literature review and methodology with formulas, results, conclusion, and numbered references. Download it as PDF (compiled with LaTeX inside the app, without internet), Word, or LaTeX source. Presentations are available as PowerPoint with LaTeX-rendered equations, and as Beamer in PDF or LaTeX source. The introduction, construct theory, and discussion are bracketed placeholders for you to complete.')}</p>
   <h3>${tl('Menyimpan pekerjaan', 'Saving your work')}</h3><p>${tl('Tombol Simpan proyek mengunduh file <code>.sembada.json</code> berisi data, model, dan pengaturan. Buka kembali lewat Buka proyek. Hasil tidak ikut disimpan; cukup klik Hitung lagi.', 'Save project downloads a <code>.sembada.json</code> file with the data, model, and settings. Reopen it with Open project. Results are not saved; just click Calculate again.')}</p>
   <h3>${tl('Privasi', 'Privacy')}</h3><p>${NATIVE ? tl('Aplikasi desktop ini', 'This desktop app') : tl('Aplikasi ini satu file HTML yang', 'This app is a single HTML file that')} ${tl('berjalan sepenuhnya di komputer Anda, juga tanpa internet. Tidak ada data yang dikirim ke server mana pun.', 'runs entirely on your computer, also without internet. No data is sent to any server.')}</p>
-  <h3>${tl('Tentang', 'About')}</h3><p>${tl(`SEMbada versi ${APP_VERSION}. Huruf Plus Jakarta Sans karya Tokotype dan Inter karya Rasmus Andersson (keduanya SIL Open Font License 1.1). Ekspor Word dan PowerPoint memakai pustaka docx, PptxGenJS, dan JSZip (lisensi MIT). PDF LaTeX dikompilasi oleh pdfTeX dalam WebAssembly (SwiftLaTeX) dengan berkas TeX Live serta font URW dan Computer Modern; lisensinya tercantum di bawah.`, `SEMbada version ${APP_VERSION}. Plus Jakarta Sans typeface by Tokotype (SIL Open Font License 1.1). Word and PowerPoint export uses the docx, PptxGenJS, and JSZip libraries (MIT license). LaTeX PDFs are compiled by pdfTeX in WebAssembly (SwiftLaTeX) with TeX Live files and URW and Computer Modern fonts; their licenses are listed below.`)}${NATIVE ? tl(' Versi desktop dibangun dengan Neutralinojs (lisensi MIT).', ' The desktop version is built with Neutralinojs (MIT license).') : ''}</p><details><summary class="small">${tl('Lisensi komponen pihak ketiga', 'Third-party licenses')}</summary><pre class="code" style="white-space:pre-wrap;margin-top:8px">${esc((NATIVE ? ['Neutralinojs\n\n' + NL_LICENSE] : []).concat(LIB_LICENSES).join('\n\n------------------------------------------------------------\n\n'))}</pre></details>`;
+  <h3>${tl('Tentang', 'About')}</h3><p>${tl(`SEMbada versi ${APP_VERSION}. Huruf Plus Jakarta Sans karya Tokotype dan Inter karya Rasmus Andersson (keduanya SIL Open Font License 1.1). Ekspor Word dan PowerPoint memakai pustaka docx, PptxGenJS, dan JSZip (lisensi MIT). PDF LaTeX dikompilasi oleh pdfTeX dalam WebAssembly (SwiftLaTeX) dengan berkas TeX Live serta font URW dan Computer Modern; lisensinya tercantum di bawah.`, `SEMbada version ${APP_VERSION}. Plus Jakarta Sans typeface by Tokotype and Inter typeface by Rasmus Andersson (both SIL Open Font License 1.1). Word and PowerPoint export uses the docx, PptxGenJS, and JSZip libraries (MIT license). LaTeX PDFs are compiled by pdfTeX in WebAssembly (SwiftLaTeX) with TeX Live files and URW and Computer Modern fonts; their licenses are listed below.`)}${NATIVE ? tl(' Versi desktop dibangun dengan Neutralinojs (lisensi MIT).', ' The desktop version is built with Neutralinojs (MIT license).') : ''}</p><details><summary class="small">${tl('Lisensi komponen pihak ketiga', 'Third-party licenses')}</summary><pre class="code" style="white-space:pre-wrap;margin-top:8px">${esc((NATIVE ? ['Neutralinojs\n\n' + NL_LICENSE] : []).concat(LIB_LICENSES).join('\n\n------------------------------------------------------------\n\n'))}</pre></details>`;
 }
 
 /* ================================================================ events */
